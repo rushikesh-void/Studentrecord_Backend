@@ -8,9 +8,7 @@ const studentRoutes = require('./routes/students');
 
 const app = express();
 
-/* ======================
-   MIDDLEWARE
-====================== */
+/* MIDDLEWARE */
 app.use(cors({
   origin: [
     'http://localhost:3000',
@@ -22,9 +20,7 @@ app.use(cors({
 
 app.use(express.json());
 
-/* ======================
-   ROUTES
-====================== */
+/* ROUTES */
 app.use('/api/students', studentRoutes);
 
 app.get('/api/health', (req, res) => {
@@ -34,9 +30,7 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-/* ======================
-   ERROR HANDLING
-====================== */
+/* ERROR HANDLIN */
 app.use((err, req, res, next) => {
   console.error(err.message);
   res.status(500).json({
@@ -44,9 +38,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-/* ======================
-   DATABASE + SERVER
-====================== */
+/* DATABASE + SERVER */
 const PORT = process.env.PORT || 5000;
 
 mongoose.connect(process.env.MONGODB_URI)
