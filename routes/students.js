@@ -3,7 +3,7 @@ const router = express.Router();
 const Student = require('../models/Student');
 const { body, validationResult } = require('express-validator');
 
-/* VALIDATION */
+// VALIDATION
 const studentValidation = [
   body('name')
     .notEmpty()
@@ -16,16 +16,35 @@ const studentValidation = [
     .withMessage('Enter marks for 5 subjects')
 ];
 
-/* GET ALL STUDENTS (WITH PAGINATION)*/
+// GET ALL STUDENTS Pagination + Search + Division
 router.get('/', async (req, res) => {
   try {
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 5;
+    // pagination values
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
     const skip = (page - 1) * limit;
 
-    const totalStudents = await Student.countDocuments();
+    // filters
+    const search = req.query.search;
+    const division = req.query.division;
 
-    const students = await Student.find()
+    const filter = {};
+
+    // search by name
+    if (search) {
+      filter.name = { $regex: search, $options: 'i' };
+    }
+
+    // filter by division
+    if (division) {
+      filter.division = division;
+    }
+
+    // total count for pagination
+    const totalStudents = await Student.countDocuments(filter);
+
+    // fetch students
+    const students = await Student.find(filter)
       .sort({ name: 1 })
       .skip(skip)
       .limit(limit);
@@ -40,12 +59,13 @@ router.get('/', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('GET STUDENTS ERROR:', error);
+    console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-/* GET STUDENT BY ID */
+// GET STUDENT BY ID
+
 router.get('/:id', async (req, res) => {
   try {
     const student = await Student.findById(req.params.id);
@@ -55,13 +75,12 @@ router.get('/:id', async (req, res) => {
     }
 
     res.json(student);
-
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-/* ADD NEW STUDENT */
+// ADD NEW STUDENT
 router.post('/', studentValidation, async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -73,19 +92,18 @@ router.post('/', studentValidation, async (req, res) => {
 
     const student = new Student({
       name,
-      marks: marks.map(Number) // IMPORTANT
+      marks: marks.map(Number)
     });
 
     await student.save();
     res.status(201).json(student);
 
   } catch (error) {
-    console.error('CREATE STUDENT ERROR:', error);
     res.status(500).json({ message: error.message });
   }
 });
 
-/* UPDATE STUDENT */
+// UPDATE STUDENT
 router.put('/:id', studentValidation, async (req, res) => {
   try {
     const { name, marks } = req.body;
@@ -106,12 +124,12 @@ router.put('/:id', studentValidation, async (req, res) => {
     res.json(student);
 
   } catch (error) {
-    console.error('UPDATE STUDENT ERROR:', error);
     res.status(500).json({ message: error.message });
   }
 });
 
-/* DELETE STUDENT */
+// DELETE STUDENT
+
 router.delete('/:id', async (req, res) => {
   try {
     const student = await Student.findByIdAndDelete(req.params.id);
